@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <title>CLJS Pong</title>
+
+        <style type="text/css">
+            #canvas-container {
+                width: 100%;
+                text-align:center;
+                padding-top: 16px;
+            }
+
+            canvas {
+                display: inline;
+                border: 3px solid black;
+            }
+        </style>
+
+    <body>
+        <h1 align="center">ClojureScript Pong</h1>
+        <hr/>
+
+        <div id="canvas-container">
+            <canvas id="pong-canvas">Your browser does not support canvas.</canvas>
+        </div>
+
+        <script src="js/goog/base.js"></script>
+        <script src="js/cljs.js"></script>
+        <script type="text/javascript">goog.require("pong.core");</script>
+
+        <script type="text/javascript">
+            pong.core.init();
+        </script>
+    </body>
+
+</html>
