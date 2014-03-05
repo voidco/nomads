@@ -9,7 +9,12 @@
 (enable-console-print!)
 
 ;; Globals ----------------------------------------------------------
-(def canvas-size {:w 646 :h 400})
+(def canvas-size
+  (let [[w h] [646 400]]
+    {:w w
+     :h h
+     :hw (/ w 2)
+     :hh (/ h 2)}))
 
 (def paddle-offset 12)
 
@@ -19,10 +24,7 @@
 (def ball-size (* 0.04 (:w canvas-size)))
 
 (def init-paddle-y
-  "Start the paddles centered vertically."
-  (let [scr-half-y    (/ (:h canvas-size) 2)
-        paddle-half-y (/ (:h paddle-size) 2)]
-    (- scr-half-y paddle-half-y)))
+  (- (:hh canvas-size) (/ (:h paddle-size) 2)))
 
 (def colours {:bg     "#699D32"
               :paddle "#2A7E77"
@@ -50,10 +52,14 @@
                  update-fn
                  (partial draw-rect (:paddle colours))))
 
-(defn center-ball [{:keys [h w] :as ball} {canvas-w :w canvas-h :h}]
-  (-> ball
-      (assoc :x (- (/ canvas-w 2) (/ w 2)))
-      (assoc :y (- (/ canvas-h 2) (/ h 2)))))
+(defn center-on [[x y] {:keys [w h] :as obj}]
+  (-> obj
+      (assoc :x (- x (/ w 2)))
+      (assoc :y (- y (/ w 2)))))
+
+(defn center-ball [ball {:keys [hw hh]}]
+  (center-on [hw hh] ball))
+
 
 (defn client->canvas-coords
   "Transforms mouse coords from client space to canvas space.
@@ -77,13 +83,25 @@
                  nil
                  (partial draw-rect (:bg colours))))
 
+(defn update-ball [event world-state ent]
+  (let [{:keys [vx vy w h]} (:value ent)]
+    (-> ent
+        (update-in [:value :x] (fn [old-x]
+                                 (clamp (+ old-x vx) 0
+                                        (- (:w canvas-size) w))))
+        (update-in [:value :y] (fn [old-y]
+                                 (clamp (+ old-y vy) 0
+                                        (- (:h canvas-size) h)))))))
+
 (def ball
-  (let [ball-dim {:x 0
-                  :y 0
-                  :w ball-size
-                  :h ball-size}]
+  (let [ball-dim {:x  0
+                  :y  0
+                  :w  ball-size
+                  :h  ball-size
+                  :vx 0
+                  :vy 0}]
     (canvas/entity (center-ball ball-dim canvas-size)
-                   nil
+                   update-ball
                    (partial draw-rect (:ball colours)))))
 
 (defn update-player-paddle
@@ -121,6 +139,14 @@
   (assoc world-state
     :mouse-coords (client->canvas-coords canvas (client-coords event))))
 
+(defn serve-ball
+  "Serve the ball if it is not already in play."
+  [event world-state]
+  (assoc-in world-state [:entities 3 :value :vx]
+            (if (even? (rand-int 50))
+              1
+              -1)))
+
 (defn render-scene
   "Loop over the entities calling each ones draw fn."
   [ctx world-state]
@@ -141,7 +167,8 @@
       :initial-state {:entities     [background player-paddle ai-paddle ball]
                       :mouse-coords [0 0]}
 
-      :on-tick      update-state
-      :on-mousemove (partial update-mouse-coords canvas)
-      :event-target canvas
-      :to-draw      (partial render-scene ctx)))))
+      :on-tick       update-state
+      :on-mousemove  (partial update-mouse-coords canvas)
+      :on-click      serve-ball
+      :event-target  canvas
+      :to-draw       (partial render-scene ctx)))))
