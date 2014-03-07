@@ -156,11 +156,8 @@
   "Loop over the entities calling each ones draw fn."
   [ctx world-state]
   (doseq [ent (:entities world-state)]
-    (let [{:keys [value draw]} ent]
-      (try
-        (draw ctx value)
-        (catch js/Error e
-          (println e))))))
+    (when-let [{:keys [value draw]} ent]
+      (draw ctx value))))
 
 (defn ^:export init
   "The main entry point for the game. The big-bang process is launched from here."
