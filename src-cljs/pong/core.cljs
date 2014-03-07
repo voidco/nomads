@@ -72,6 +72,12 @@
 
 (defn clamp [x min-val max-val]
   (max min-val (min max-val x)))
+
+(defn normalize [[x y]]
+  (let [length (.sqrt js/Math (+ (* x x) (* y y)))]
+    (if (pos? length)
+      [(/ x length) (/ y length)]
+      [x y])))
 ;; ==================================================================
 
 ;; Entities ---------------------------------------------------------
@@ -84,13 +90,14 @@
                  (partial draw-rect (:bg colours))))
 
 (defn update-ball [event world-state ent]
-  (let [{:keys [vx vy w h]} (:value ent)]
+  (let [{:keys [vx vy w h]} (:value ent)
+        [n-vx n-vy]         (normalize [vx vy])]
     (-> ent
         (update-in [:value :x] (fn [old-x]
-                                 (clamp (+ old-x vx) 0
+                                 (clamp (+ old-x n-vx) 0
                                         (- (:w canvas-size) w))))
         (update-in [:value :y] (fn [old-y]
-                                 (clamp (+ old-y vy) 0
+                                 (clamp (+ old-y n-vy) 0
                                         (- (:h canvas-size) h)))))))
 
 (def ball
@@ -139,13 +146,11 @@
   (assoc world-state
     :mouse-coords (client->canvas-coords canvas (client-coords event))))
 
-(defn serve-ball
-  "Serve the ball if it is not already in play."
-  [event world-state]
-  (assoc-in world-state [:entities 3 :value :vx]
-            (if (even? (rand-int 50))
-              1
-              -1)))
+(defn serve-ball [event world-state]
+  (update-in world-state [:entities 3 :value]
+             #(-> %
+                  (assoc :vx (rand-nth [-1 1]))
+                  (assoc :vy (rand-nth [-1 0 1])))))
 
 (defn render-scene
   "Loop over the entities calling each ones draw fn."
