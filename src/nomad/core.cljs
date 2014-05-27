@@ -8,7 +8,7 @@
 
 (enable-console-print!)
 
-;; Globals ----------------------------------------------------------
+;; Globals
 (def canvas-size
   (let [[w h] [646 400]]
     {:w w
@@ -29,9 +29,8 @@
 (def colours {:bg     "#699D32"
               :paddle "#2A7E77"
               :ball   "#281B50"})
-;; ==================================================================
 
-;; Helper fns -------------------------------------------------------
+;; Helper fns
 (defn init-canvas
   "Sets the canvas size and returns a 2D context."
   [canvas {:keys [w h]}]
@@ -60,7 +59,6 @@
 (defn center-ball [ball {:keys [hw hh]}]
   (center-on [hw hh] ball))
 
-
 (defn client->canvas-coords
   "Transforms mouse coords from client space to canvas space.
   Does not perform bounds checking."
@@ -78,9 +76,8 @@
     (if (pos? length)
       [(/ x length) (/ y length)]
       [x y])))
-;; ==================================================================
 
-;; Entities ---------------------------------------------------------
+;; Entities
 (def background
   (canvas/entity {:x 0
                   :y 0
@@ -128,7 +125,6 @@
 
 (def ai-paddle
   (create-paddle nil [paddle-offset init-paddle-y]))
-;; ==================================================================
 
 (defn update-state
   "Update each entity if it has an update fn."
